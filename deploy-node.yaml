@@ -1,0 +1,54 @@
+---
+- name: install node and npm
+  hosts: 192.168.0.78
+
+  tasks:
+    - name: update apt repo and cache
+      apt: update-cache=yes cache_valid_time=3600
+    - name: install nodejs and npm
+      apt:
+        pkg:
+          - nodejs
+          - npm
+
+- name: create new linux user for node app
+  hosts: 192.168.0.78
+  vars-files:
+    project-vars.yaml
+  tasks:
+    - name: create linux user
+      user:
+        name: "{{ user_name }}"
+        comment: NodeJS user
+        group: ubuntu
+
+- name: Deploy nodejs app
+  hosts: 192.168.0.78
+  become: True
+  become_user: "{{ user_name }}"
+  vars-files:
+    project-vars.yaml
+
+  tasks:
+    - name: unpack the nodejs archive
+      unarchive:
+        src: "{{ archive_path }}/nodejs-app-{{ version }}.tgz"
+        dest: "{{ user_home_dir }}"
+
+    - name: install dependencies for node app
+      npm:
+        path: "{{ user_home_dir }}/package"
+
+    - name: start the application
+      command: node server
+      args:
+        chdir: "{{ user_home_dir }}/package/app"
+      async: 1000
+      poll: 0
+
+    - name: ensure app is running
+      shell: ps aux | grep node
+      register: app_status
+
+    - debug: msg={{ app_status.stdout_lines }}
+
