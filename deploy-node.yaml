@@ -1,6 +1,6 @@
 ---
 - name: install node and npm
-  hosts: 192.168.0.78
+  hosts: webserver
 
   tasks:
     - name: update apt repo and cache
@@ -12,7 +12,7 @@
           - npm
 
 - name: create new linux user for node app
-  hosts: 192.168.0.78
+  hosts: webserver
   vars-files:
     project-vars.yaml
   tasks:
@@ -23,7 +23,7 @@
         group: ubuntu
 
 - name: Deploy nodejs app
-  hosts: 192.168.0.78
+  hosts: webserver
   become: True
   become_user: "{{ user_name }}"
   vars-files:
